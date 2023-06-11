@@ -2,17 +2,20 @@
     import type { PageData } from './$types';
     import { fly } from 'svelte/transition'
     import { fetchArticles } from './fetchArticles';
-    
+    import PaginationButton from "./PaginationButton.svelte";
+
     export let data: PageData;
 
     let {products} = data
 
-    let showProducts: boolean = true
+    let showProducts = true
 
-    let page:number = 1;
-    const limit: number = 10
-    
-    async function handleUpdateArticles(newPage: number) {
+    let animationMultiplier = 1
+    let page = 1;
+    const limit = 10
+
+    const handleUpdateArticles = async (newPage: number) => {
+        animationMultiplier = newPage > page ? 1 : -1
         showProducts = false
         products = await fetchArticles(newPage, limit)
         page = newPage
@@ -21,13 +24,15 @@
 
 </script>
 
-<div class="p-3">
+<div class="p-3 flex flex-col items-center">
+    <PaginationButton page={page} limit={limit} total={products?.total} onClick={handleUpdateArticles}/>
+
     <ul>
         {#each products?.products as product}
         {#if showProducts}
             <li
-                in:fly={{x: 100, duration: 400}}
-                out:fly={{x: -100, duration: 400}}
+                in:fly={{x: 100 * animationMultiplier, duration: 400}}
+                out:fly={{x: 100 * animationMultiplier * -1, duration: 400}}
             >
                 <div class="card text-center w-96 bg-base-100 shadow-xl m-2 p-2"> 
                     <p>{product?.title} </p>
@@ -38,15 +43,8 @@
                 </div>
             </li>
         {/if}
-        <div/>
         {/each}
     </ul>
 
-    <button class="btn" disabled={page <= 1 } on:click={() => handleUpdateArticles(page - 1)}>
-        {'<'}
-    </button>
-    page {page}
-    <button class="btn" disabled={products?.total / limit === page} on:click={() => handleUpdateArticles(page + 1)}>
-        {'>'}
-    </button>
+    <PaginationButton page={page} limit={limit} total={products?.total} onClick={handleUpdateArticles}/>
 </div>
